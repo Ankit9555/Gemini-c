@@ -1,0 +1,16 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+*{
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: outfit;
+
+
+}
+#root{
+  min-height: 100vh;
+  display: flex;
+  background-color: #3f403e;
+}
