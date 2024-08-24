@@ -1,24 +1,83 @@
-import { createContext } from "react";
-import run from "../Config/gemini";
+import { createContext, useState } from "react";
+import {run} from "../Config/gemini";
 
-export const context = createContext();
+export const Context = createContext();
 
-const ContextProvider = (props)=>{
+const ContextProvider = (props) => {
 
-   const onSend = async (prompt) =>{
-     await run(prompt)
-   }
+    const [prevPrompts, setPrevPrompts] = useState([]);
+    const [input, setInput] = useState("");
+    const [recentPrompt, setRecentPrompt] = useState("");
+    const [showResult, setShowResult] = useState(false)
+    const [loading, setLoading] = useState(false)
+    const [resultData, setResultData] = useState("")
 
-   onSend("what is javascript.")
 
- const contextValue = {
+    function delayPara(index, nextWord) {
+        setTimeout(function () {
+            setResultData(prev => prev + nextWord)
+        }, 75 * index);
+    }
 
- }
- return(
-    <context.Provider value={contextValue}>
-      {props.children}
-     </context.Provider>
- )
+    const onSent = async (prompt) => {
+
+        setResultData("")
+        setLoading(true)
+        setShowResult(true)
+        let response;
+        if (prompt !== undefined) {
+            response = await runChat(prompt);
+            setRecentPrompt(prompt)
+        }
+        else {
+            setPrevPrompts(prev => [...prev, input]);
+            setRecentPrompt(input)
+            response = await run(input);
+        }
+        let responseArray = response.split('**');
+        let newArray = "";
+        for (let i = 0; i < responseArray.length; i++) {
+            if (i === 0 || i % 2 !== 1) {
+                newArray += responseArray[i]
+            }
+            else {
+                newArray += "<b>" + responseArray[i] + "</b>"
+            }
+        }
+        console.log(newArray);
+        responseArray = newArray.split('*').join("</br>").split(" ");
+        for (let i = 0; i < responseArray.length; i++) {
+            const nextWord = responseArray[i];
+            delayPara(i, nextWord + " ")
+        }
+        setLoading(false);
+        setInput("")
+    }
+
+    const newChat = async () => {
+        setLoading(false);
+        setShowResult(false);
+    }
+
+    const contextValue = {
+        prevPrompts,
+        setPrevPrompts,
+        onSent,
+        setRecentPrompt,
+        recentPrompt,
+        showResult,
+        loading,
+        resultData,
+        input,
+        setInput,
+        newChat
+    }
+
+    return (
+        <Context.Provider value={contextValue}>
+            {props.children}
+        </Context.Provider>
+    )
 }
 
-export default ContextProvider;
+export default ContextProvider
